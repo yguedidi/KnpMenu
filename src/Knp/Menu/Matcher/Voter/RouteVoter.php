@@ -76,6 +76,11 @@ class RouteVoter implements VoterInterface
             throw new \InvalidArgumentException('Routes extra items must have a "route" or "pattern" key.');
         }
 
+        return $this->isMatchingParameters($request, $testedRoute) && $this->isMatchingQueryParameters($request, $testedRoute);
+    }
+
+    private function isMatchingParameters(Request $request, array $testedRoute): bool
+    {
         if (!isset($testedRoute['parameters'])) {
             return true;
         }
@@ -85,6 +90,24 @@ class RouteVoter implements VoterInterface
         foreach ($testedRoute['parameters'] as $name => $value) {
             // cast both to string so that we handle integer and other non-string parameters, but don't stumble on 0 == 'abc'.
             if (!isset($routeParameters[$name]) || (string) $routeParameters[$name] !== (string) $value) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isMatchingQueryParameters(Request $request, array $testedRoute): bool
+    {
+        if (!isset($testedRoute['query_parameters'])) {
+            return true;
+        }
+
+        $routeQueryParameters = $request->query->all();
+
+        foreach ($testedRoute['query_parameters'] as $name => $value) {
+            // cast both to string so that we handle integer and other non-string parameters, but don't stumble on 0 == 'abc'.
+            if (!isset($routeQueryParameters[$name]) || (string) $routeQueryParameters[$name] !== (string) $value) {
                 return false;
             }
         }
